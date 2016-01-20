@@ -20,7 +20,7 @@ function [mle] = estimate_params_SSR_standalone(zTarget,hTarget,train,wti,snippe
 %
 % Outstanding task: EXCLUDE BANDS 1 AND 9 FOR NGA TRACES (not yet done)
 
-                        
+fprintf(1,'coucou\n')                        
 global o minimax mm rr snpLength fc fMode fOrder iN
 
 o.ppt  = 1;  % If plot is for ppt (landscape format), use o.ppt = 1;
