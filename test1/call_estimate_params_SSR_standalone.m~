@@ -1,0 +1,20 @@
+clear all
+
+global o minimax mm rr snpLength fc fMode fOrder iN
+
+load gba_test1
+
+% Parameter grid
+mm = gba_test1.mm;
+rr = gba_test1.rr;
+
+nsim = 30;
+snippet = gba_test1.snippet;
+snpLength= gba_test1.snpLength;
+
+zTarget = gba_test1.zTarget;
+train   = gba_test1.train;
+wti0    = ones(size(train.m));
+
+
+[mle] = estimate_params_SSR_standalone(zTarget,[],train,wti0,snippet,1:9,{'Z'},nsim,[],[]);
