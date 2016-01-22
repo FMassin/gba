@@ -20,8 +20,7 @@ function [mle] = estimate_params_SSR_standalone(zTarget,hTarget,train,wti,snippe
 %
 % Outstanding task: EXCLUDE BANDS 1 AND 9 FOR NGA TRACES (not yet done)
 
-fprintf(1,'coucou\n')                        
-global o minimax mm rr snpLength fc fMode fOrder iN
+global o mm rr snpLength fc fMode fOrder iN
 
 o.ppt  = 1;  % If plot is for ppt (landscape format), use o.ppt = 1;
 %o.ppt = 0;  % If plot is for poster (portrait format)
@@ -66,8 +65,12 @@ if useZ
     % gcf; clf; plot(misfit_l2(idx_std)); set(gca,'yscale','log');
     
     % Weighting: Replicate each value according to it's integer weight in <wt>
-    mz = rude(wt,m)';
-    rz = rude(wt,r)';
+    %     mz = rude(wt,m)';
+    %     rz = rude(wt,r)';     % if weighting is used, which here is not
+    %                             the case, rude.m replicates m- and r-values according to their
+    %                             weight
+    mz = m;
+    rz = r;
     if o.plotSSR; mzbak=m; rzbak=r; end
 end
 
