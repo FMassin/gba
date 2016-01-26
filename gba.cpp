@@ -167,7 +167,7 @@ void GbA::init(){
 
 void GbA::compute_likelihood(double *data, int nstats, int nbands, int nsim,
 						double mean[2], double cov[2][2]){
-	int i, j, k, l, idx;
+	int i, j, k, l;
 	gsl_vector *lsq = gsl_vector_alloc (_td->get_noftraces());
 	gsl_vector *input = gsl_vector_alloc (nbands);
 	gsl_vector *trace = gsl_vector_alloc (nbands);
