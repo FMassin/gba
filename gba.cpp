@@ -193,7 +193,6 @@ void GbA::compute_likelihood(double *data, int nstats, int nbands, int nsim,
 		for(l=0; l<nsim; l++){
 			dists[l] = std::log10(gsl_vector_get(_td->_r_gsl, indices[l]));
 			mags[l] = gsl_vector_get(_td->_m_gsl, indices[l]);
-			//std::cout << gsl_vector_get(_td->_m_gsl,indices[l]) << std::endl;
 		}
 		mean[0] = gsl_stats_mean(dists,1,nsim);
 		mean[1] = gsl_stats_mean(mags,1,nsim);
@@ -201,6 +200,7 @@ void GbA::compute_likelihood(double *data, int nstats, int nbands, int nsim,
 		cov[1][1] = gsl_stats_variance(mags, 1, nsim);
 		cov[0][1] = gsl_stats_covariance_m(dists,1,mags,1,nsim,mean[0],mean[1]);
 		cov[1][0] = cov[0][1];
+#ifdef DEBUG
 		std::cout << "Distance: " << mean[0] << "; Magnitude: " << mean[1] << std::endl;
 		std::cout << "Covariance matrix:" << std::endl;
 		for(i=0; i<2; i++){
@@ -208,5 +208,6 @@ void GbA::compute_likelihood(double *data, int nstats, int nbands, int nsim,
 				printf("%d, %d, %g\n",i,j,cov[i][j]);
 			}
 		}
+#endif
 	}
 }
