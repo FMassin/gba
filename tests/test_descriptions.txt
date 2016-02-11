@@ -1,0 +1,20 @@
+
+test2   160211
+=====
+GbA parameter estimates for two records of same earthquake, at 5 points in time
+each: t=[0.5 1 2 3 5]sec
+
+used code versions i36 and following traceLists: 
+dataSetBaseNames = {'/scratch/memeier/data/japan/k_kik/M5p_z25km/out/'; ...
+                    '/scratch/memeier/data/ngawest/out/'; ...
+                    '/scratch/memeier/data/socal/scsn_900101_011231/out/'; ...
+                    '/scratch/memeier/data/socal/scsn_040101_051231/out/'; ...
+                    '/scratch/memeier/data/socal/scsn_060101_071231/out/'};
+
+
+
+
+test1   1601xx
+=====
+GbA parameter estimates for single record, at single point in time
+
