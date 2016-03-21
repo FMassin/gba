@@ -1,8 +1,9 @@
 all: interface library gut
 
 CC=g++
-CCFLAGS= -g -Wall
-LIBS=-lgsl -lcblas -latlas -lm 
+#CCFLAGS= -g -Wall -DDEBUG
+CCFLAGS=-g -Wall
+LIBS=-lgsl -lcblas -latlas -lm -lnetcdf_c++ 
 
 ofiles= gba.o
 

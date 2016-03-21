@@ -20,8 +20,9 @@ class GbATestCase(unittest.TestCase):
         self.path = os.path.dirname(__file__)
         self.fbdata = np.loadtxt(os.path.join(self.path, 'data', 'az_obs.txt'),
                                  unpack=True)
+        training_data = os.path.join(self.path, '..', 'data', 'az_training.nc')
         self.g = gba.GbA()
-        self.g.init()
+        self.g.init(training_data)
 
     def test_likelihood(self):
         """
@@ -31,7 +32,7 @@ class GbATestCase(unittest.TestCase):
         nsim = 30
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.compute_likelihood([self.fbdata], nsim, mean, cov)
+        self.g.compute_likelihood(self.fbdata, 0.5, 'z', nsim, mean, cov)
         np.testing.assert_almost_equal(mean[0], 1.574, decimal=3)
         np.testing.assert_almost_equal(mean[1], 5.726, decimal=3)
         np.testing.assert_almost_equal(cov[0, 0], 0.039, decimal=3)
@@ -52,7 +53,7 @@ class GbATestCase(unittest.TestCase):
         nsim = 30
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.compute_likelihood([self.fbdata], nsim, mean, cov)
+        self.g.compute_likelihood(self.fbdata, 0.5, 'z', nsim, mean, cov)
         rv = stats.multivariate_normal(mean, cov)
         p = rv.pdf(pos)
         mp = np.trapz(p, x=r, axis=0)

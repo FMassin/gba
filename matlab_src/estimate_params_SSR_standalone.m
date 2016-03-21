@@ -133,6 +133,8 @@ end
 covmat = cov([rVal mVal]);
 mmean  = mean(mVal);
 rmean  = mean(rVal);
+fprintf(1,'Mean magnitude: %f\n',mmean)
+fprintf(1,'Mean distance: %f\n',rmean)
 l      = log(mvnpdf([RR(:) MM(:)],[rmean mmean],covmat));
 l      = reshape(l,length(mm),length(rr));   % log-likelihood function on grid
 
