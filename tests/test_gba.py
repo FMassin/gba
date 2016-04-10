@@ -21,7 +21,9 @@ class GbATestCase(unittest.TestCase):
         self.fbdata = np.loadtxt(os.path.join(self.path, 'data', 'az_obs.txt'),
                                  unpack=True)
         training_data = os.path.join(self.path, '..', 'data', 'az_training.nc')
-        self.g = gba.GbA()
+        self.nbands = 9
+        self.nsim = 30
+        self.g = gba.GbA(self.nbands, self.nsim)
         self.g.init(training_data)
 
     def test_likelihood(self):
@@ -29,10 +31,13 @@ class GbATestCase(unittest.TestCase):
         Test that the likelihood pdf has the correct mean and
         covariance matrix.
         """
-        nsim = 30
+        mags = np.zeros(2 * self.nsim)
+        r = np.zeros(2 * self.nsim)
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.compute_likelihood(self.fbdata, 0.5, 'z', nsim, mean, cov)
+        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.get_m_r(mags, r)
+        self.g.get_mean_cov(mean, cov)
         np.testing.assert_almost_equal(mean[0], 1.574, decimal=3)
         np.testing.assert_almost_equal(mean[1], 5.726, decimal=3)
         np.testing.assert_almost_equal(cov[0, 0], 0.039, decimal=3)
@@ -50,10 +55,10 @@ class GbATestCase(unittest.TestCase):
         M, R = np.meshgrid(m, r)
         pos = np.empty(M.shape + (2,))
         pos[:, :, 0] = R; pos[:, :, 1] = M
-        nsim = 30
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.compute_likelihood(self.fbdata, 0.5, 'z', nsim, mean, cov)
+        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.get_mean_cov(mean, cov)
         rv = stats.multivariate_normal(mean, cov)
         p = rv.pdf(pos)
         mp = np.trapz(p, x=r, axis=0)
@@ -64,6 +69,27 @@ class GbATestCase(unittest.TestCase):
         rhat = r[np.argmax(rp_normed)]
         np.testing.assert_almost_equal(mhat, 5.8, decimal=1)
         np.testing.assert_almost_equal(rhat, 1.6, decimal=1)
+
+    def test_pdf(self):
+        """
+        Test the marginal pdfs computed by the C++ code.
+        """
+        m = np.linspace(2, 8, 31)
+        r = np.linspace(0, 2.0, 21)
+        mcp = m.copy()
+        rcp = r.copy()
+        pdf = np.zeros((m.size, r.size))
+        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.get_pdf(pdf, mcp, rcp)
+        mhat = m[np.argmax(mcp)]
+        rhat = r[np.argmax(rcp)]
+        # Test the MAP values
+        np.testing.assert_almost_equal(mhat, 5.8, decimal=1)
+        np.testing.assert_almost_equal(rhat, 1.6, decimal=1)
+        # Test that the pdfs have been properly normalized
+        np.testing.assert_almost_equal(np.trapz(mcp, x=m), 1.0, decimal=1)
+        np.testing.assert_almost_equal(np.trapz(rcp, x=r), 1.0, decimal=1)
+
 
 def suite():
     return unittest.makeSuite(GbATestCase, 'test')
