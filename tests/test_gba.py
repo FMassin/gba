@@ -35,7 +35,7 @@ class GbATestCase(unittest.TestCase):
         r = np.zeros(2 * self.nsim)
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.process(self.fbdata, 0.5, 0)
         self.g.get_m_r(mags, r)
         self.g.get_mean_cov(mean, cov)
         np.testing.assert_almost_equal(mean[0], 1.574, decimal=3)
@@ -57,7 +57,7 @@ class GbATestCase(unittest.TestCase):
         pos[:, :, 0] = R; pos[:, :, 1] = M
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
-        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.process(self.fbdata, 0.5, 0)
         self.g.get_mean_cov(mean, cov)
         rv = stats.multivariate_normal(mean, cov)
         p = rv.pdf(pos)
@@ -79,7 +79,7 @@ class GbATestCase(unittest.TestCase):
         mcp = m.copy()
         rcp = r.copy()
         pdf = np.zeros((m.size, r.size))
-        self.g.process(self.fbdata, 0.5, 'z')
+        self.g.process(self.fbdata, 0.5, 0)
         self.g.get_pdf(pdf, mcp, rcp)
         mhat = m[np.argmax(mcp)]
         rhat = r[np.argmax(rcp)]
