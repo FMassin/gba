@@ -87,10 +87,10 @@ class SCGbA : public Client::StreamApplication {
 			Processing::EEWAmps::Config eewCfg;
 			eewCfg.dumpRecords = commandline().hasOption("dump");
 
-			eewCfg.baseLineCorrectionBufferLength = 40.0;
+			eewCfg.baseLineCorrectionBufferLength = 60.0;
 			eewCfg.taperLength = 10.0;
 			eewCfg.gba.enable = true;
-			eewCfg.gba.bufferSize = Core::TimeSpan(20,0);
+			eewCfg.gba.bufferSize = Core::TimeSpan(30,0);
 			eewCfg.gba.cutOffTime = Core::TimeSpan(20,0);
 
 			// Convert to velocity only
@@ -210,8 +210,10 @@ class SCGbA : public Client::StreamApplication {
 			}
 			get_moments(_mmarg,_msamples,_nms,_dmag,mbar,mhat,m_sig);
 			get_moments(_rmarg,_rsamples,_nrs,_dr,rbar,rhat,r_sig);
-			cout << "Mhat: " << mhat << "; Mbar: " << mbar <<"; Sigma^2: " << m_sig << endl;
-			cout << "Rhat: " << rhat << "; Rbar: " << rbar <<"; Sigma^2: " << r_sig << endl;
+			cout << _latest_data.toString("%FT%T.%fZ");
+			cout << "; " << Core::Time::GMT().toString("%FT%T.%fZ");
+			cout << "; Mhat: " << mhat << "; Mbar: " << mbar <<"; Sigma^2: " << m_sig;
+			cout << "; Rhat: " << rhat << "; Rbar: " << rbar <<"; Sigma^2: " << r_sig << endl;
 			return;
 		}
 
@@ -230,11 +232,14 @@ class SCGbA : public Client::StreamApplication {
 			}
 			_mags[stream]->process(amps,_eewProc.configuration().gba.passbands.size(),
 					              (double)max - (double)ptime,proc->usedComponent());
-			_mags[stream]->get_mean_cov(mean,cov);
-			cout << proc->usedComponent() << "; " << proc->streamID() <<"; ";
+			//_mags[stream]->get_mean_cov(mean,cov);
+			if((double)max > (double)_latest_data)
+				_latest_data = (double)max;
+
+			/*cout << proc->usedComponent() << "; " << proc->streamID() <<"; ";
 			cout << ptime.iso() << "; " << max.iso() << "; " << (double)max - (double)ptime << "; ";
 			cout << mean[0] << ";" << mean[1];
-			cout << endl;
+			cout << endl;*/
 			evaluate();
 		}
 
@@ -252,6 +257,7 @@ class SCGbA : public Client::StreamApplication {
 		double                             *_pdf;
 		double                             *_msamples, *_rsamples;
 		bool                               _first;
+		Core::Time                         _latest_data;
 };
 
 
