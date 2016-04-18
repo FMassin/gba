@@ -17,15 +17,32 @@ import scipy.stats as stats
 import ipdb
 import pyproj
 
+from run_test import TestSCGbA
 
 class SCGbATestCase(unittest.TestCase):
 
     def setUp(self):
+        self.path = os.path.dirname(__file__)
+        station = 'ABK'
+        channel = 'HGZ'
+        self.gba_data = os.path.join(self.path, 'data',
+                                     'BO.%s..%s_gba.txt' % (station, channel))
+        wf = os.path.join(self.path, 'data', 'test2.mseed.sorted')
+
+        if not os.path.isfile(self.gba_data):
+            faketimepath = \
+            '/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1'
+            inventory = os.path.join(self.path, 'data', 'Inventory.xml')
+            scgba_bin = os.path.join(self.path, '..', './scgba')
+            msrtsimul_bin = os.path.join(self.path, './msrtsimul.py')
+            seiscomp_bin = "/home/behry/eewamps/bin/seiscomp"
+            tg = TestSCGbA(faketimepath, 'BO', station, '', channel,
+                           inventory, self.gba_data, scgba_bin, msrtsimul_bin,
+                           seiscomp_bin)
+            tg.run(wf)
         abk_loc = (140.451, 39.0384)
         self.ot = UTCDateTime('1996-08-10T18:12:17.3Z')
         # load the sgba result
-        self.path = os.path.dirname(__file__)
-        wf = os.path.join(self.path, 'data', 'test2.mseed.sorted')
         st = read(wf)
         self.tr_abk = st.select(channel='HGZ', station='ABK')[0]
         m_data = os.path.join(self.path, 'data', 'AKT_test.nc')
@@ -45,7 +62,6 @@ class SCGbATestCase(unittest.TestCase):
         az, baz, dist = g.inv(abk_loc[0], abk_loc[1], evlon, evlat)
         self.evdist = dist / 1000.
 
-        self.gba_data = os.path.join(self.path, 'data', 'BO.ABK..HGZ_gba.txt')
         fh = open(self.gba_data)
         pfloat = r'(\d+\.?\d*)'
         p = r'(\S+); (\S+); Mhat: ' + pfloat
@@ -74,7 +90,7 @@ class SCGbATestCase(unittest.TestCase):
                 self.magHat.append(mhat)
                 self.mag_unc.append(np.sqrt(msig))
                 self.dist.append(rbar)
-                self.dist_unc.append(rsig)
+                self.dist_unc.append(np.sqrt(rsig))
                 self.times.append(ct - self.pt_abk)
 
 
@@ -110,9 +126,9 @@ class SCGbATestCase(unittest.TestCase):
         # ax11.plot(self.abk_t1, self.abk_rhat, 'b:')
         for tl in ax11.get_yticklabels():
             tl.set_color('b')
-        ax11.set_yticks([np.log10(x) for x in [20, 30, 40, 50, 100]])
-        ax11.set_yticklabels([20, 30, 40, 50, 100])
-        ax11.set_ylim(np.log10(10), np.log10(100))
+        ax11.set_yticks([np.log10(x) for x in [20, 30, 40, 50, 100, 200]])
+        ax11.set_yticklabels([20, 30, 40, 50, 100, 200])
+        ax11.set_ylim(np.log10(10), np.log10(200))
         ax11.set_xlim(xmin, xmax)
 
         ax2 = fig.add_axes([0.07, 0.6, 0.85, 0.3])
