@@ -2,12 +2,16 @@
 %module gba
 %include "typemaps.i"
 %include "std_string.i"
-
+%include "std_vector.i"
 
 %{
 #define SWIG_FILE_WITH_INIT
 #include "gba.h"
 %}
+
+namespace std {
+   %template(DVector) vector<double>;
+}
 
 %include "numpy.i"
 
