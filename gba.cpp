@@ -1,52 +1,77 @@
 #include "gba.h"
-#include <iostream>
 
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_sort_vector.h>
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_randist.h>
+
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <pthread.h>
 
 bool TData::load(std::string filename) {
 #ifdef DEBUG
 		std::cout << "Reading training data set from: " << filename << std::endl;
 #endif
-	_nid = new NcFile(filename.c_str());
-	if(!_nid->is_valid())
-		return false;
-	_dim_nt = _nid->get_dim("traces");
-	_ntraces = _dim_nt->size();
-	_dim_t = _nid->get_dim("time");
-	_ntimes = _dim_t->size();
-	_dim_f = _nid->get_dim("filter");
-	_nbands = _dim_f->size();
-	_m_gsl = gsl_vector_alloc (_dim_nt->size());
-	_r_gsl = gsl_vector_alloc (_dim_nt->size());
-	_t_gsl = gsl_vector_alloc (_dim_t->size());
-	_var_mag = _nid->get_var("magnitude");
-	_var_dist = _nid->get_var("epicdist");
-	_var_time = _nid->get_var("time");
-	_var_mag->get(_m_gsl->data,_dim_nt->size());
-	_var_dist->get(_r_gsl->data,_dim_nt->size());
-	_var_time->get(_t_gsl->data,_dim_t->size());
-	_amps_var[vertical] = _nid->get_var("z");
-	_amps_var[horizontal] = _nid->get_var("h");
+	_start.push_back(0);
+	_count.push_back(0);
+	try{
+	_nid = new netCDF::NcFile(filename, netCDF::NcFile::read);
+	_dim_nt = _nid->getDim("traces");
+	_ntraces = _dim_nt.getSize();
+	_dim_t = _nid->getDim("time");
+	_ntimes = _dim_t.getSize();
+	_dim_f = _nid->getDim("filter");
+	_nbands = _dim_f.getSize();
+	_m_gsl = gsl_vector_alloc (_dim_nt.getSize());
+	_r_gsl = gsl_vector_alloc (_dim_nt.getSize());
+	_t_gsl = gsl_vector_alloc (_dim_t.getSize());
+	_var_mag = _nid->getVar("magnitude");
+	_var_dist = _nid->getVar("epicdist");
+	_var_time = _nid->getVar("time");
+	_count[0] = _dim_nt.getSize();
+	_var_mag.getVar(_start, _count, _m_gsl->data);
+	_var_dist.getVar(_start, _count, _r_gsl->data);
+	_count[0] = _dim_t.getSize();
+	_var_time.getVar(_start, _count, _t_gsl->data);
+	_amps_var[vertical] = _nid->getVar("z");
+	_amps_var[horizontal] = _nid->getVar("h");
 
 #ifdef DEBUG
-	std::cout << "Number of traces: " << _dim_nt->size() << std::endl;
-	std::cout << "Number of filters: " << _dim_f->size() << std::endl;
-	std::cout << "Number of timesteps: " << _dim_t->size() << std::endl;
+	std::cout << "Number of traces: " << _dim_nt.getSize() << std::endl;
+	std::cout << "Number of filters: " << _dim_f.getSize() << std::endl;
+	std::cout << "Number of timesteps: " << _dim_t.getSize() << std::endl;
 #endif
 
-	_amps[vertical] = gsl_matrix_alloc(_dim_nt->size(),_dim_f->size());
-	_amps[horizontal] = gsl_matrix_alloc(_dim_nt->size(),_dim_f->size());
+	_amps[vertical] = gsl_matrix_alloc(_dim_nt.getSize(),_dim_f.getSize());
+	_amps[horizontal] = gsl_matrix_alloc(_dim_nt.getSize(),_dim_f.getSize());
 
 	// Preload data for first time step
-	_amps_var[vertical]->get(_amps[vertical]->data,1,_dim_nt->size(),_dim_f->size());
-	_amps_var[horizontal]->get(_amps[horizontal]->data,1,_dim_nt->size(),_dim_f->size());
+	_start.push_back(0);
+	_start.push_back(0);
+	_count[0] = 1;
+	_count.push_back(_dim_nt.getSize());
+	_count.push_back(_dim_f.getSize());
+	_amps_var[vertical].getVar(_start,_count,_amps[vertical]->data);
+	_amps_var[horizontal].getVar(_start,_count,_amps[horizontal]->data);
 	_currenttime_idx = 1;
+	}catch(netCDF::exceptions::NcException &e){
+		e.what();
+		return false;
+	}
 	return true; // if successful
 }
 
 gsl_matrix * TData::get_amps(int timeidx, TData::Component cmpnt){
 	if (timeidx != _currenttime_idx){
-		_amps_var[cmpnt]->set_cur(timeidx,0,0);
-		_amps_var[cmpnt]->get(_amps[cmpnt]->data,1,_dim_nt->size(),_dim_f->size());
+		_start[0] = timeidx;
+		try{
+			_amps_var[cmpnt].getVar(_start,_count,_amps[cmpnt]->data);
+		}catch(netCDF::exceptions::NcException &e){
+			e.what();
+		}
 		return _amps[cmpnt];
 	}else{
 		return _amps[cmpnt];
@@ -103,15 +128,16 @@ void GbA::process(double *data, int nbands, float time, int cmpnt){
 	gsl_vector *input = gsl_vector_alloc (nbands);
 	gsl_vector *trace = gsl_vector_alloc (nbands);
 	gsl_matrix *tdata;
-	double misfit_l2;
+	double misfit_l2, terror;
 	size_t *indices = new size_t[_nsim];
 	TData::Component _c = static_cast<TData::Component>(cmpnt);
 	_status[_c] = true;
 	// Find time index
 	for(i=0;i<_td->get_noftimes();i++){
-		if(abs(gsl_vector_get(_td->get_times(),i) - time) < timemin){
+		terror = gsl_vector_get(_td->get_times(),i) - time;
+		if(abs(terror)< timemin){
 			timeidx = i;
-			timemin = abs(gsl_vector_get(_td->get_times(),i) - time);
+			timemin = abs(terror);
 		}
 	}
 
