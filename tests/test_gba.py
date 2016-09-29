@@ -54,7 +54,8 @@ class GbATestCase(unittest.TestCase):
         r = np.linspace(0, 2.0, 21)
         M, R = np.meshgrid(m, r)
         pos = np.empty(M.shape + (2,))
-        pos[:, :, 0] = R; pos[:, :, 1] = M
+        pos[:, :, 0] = R
+        pos[:, :, 1] = M
         mean = np.zeros((2))
         cov = np.zeros((2, 2))
         self.g.process(self.fbdata, 0.5, 0)
