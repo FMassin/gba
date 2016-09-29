@@ -11,6 +11,24 @@
 #include <limits>
 #include <pthread.h>
 
+TData::TData(){
+	_nid = 0;
+	_m_gsl = 0;
+	_r_gsl = 0;
+	_t_gsl = 0;
+	_amps[TData::vertical] = 0;
+	_amps[TData::horizontal] = 0;
+}
+
+TData::~TData(){
+	delete _nid;
+	gsl_vector_free(_m_gsl);
+	gsl_vector_free(_r_gsl);
+	gsl_vector_free(_t_gsl);
+	gsl_matrix_free(_amps[TData::vertical]);
+	gsl_matrix_free(_amps[TData::horizontal]);
+}
+
 bool TData::load(std::string filename) {
 #ifdef DEBUG
 		std::cout << "Reading training data set from: " << filename << std::endl;
@@ -61,7 +79,7 @@ bool TData::load(std::string filename) {
 		e.what();
 		return false;
 	}
-	return true; // if successful
+	return true;
 }
 
 gsl_matrix * TData::get_amps(int timeidx, TData::Component cmpnt){
@@ -102,6 +120,41 @@ gsl_vector * TData::get_times(){
 	return _t_gsl;
 }
 
+GbA::GbA(int nb, int ns){
+	_nbands = nb;
+	_nsim = ns;
+	_status[TData::vertical] = false;
+	_status[TData::horizontal] = false;
+	_mags = gsl_vector_calloc(2*_nsim);
+	_dists = gsl_vector_calloc(2*_nsim);
+	_m[TData::vertical] = gsl_vector_subvector(_mags,0,_nsim);
+	_m[TData::horizontal] = gsl_vector_subvector(_mags,_nsim,_nsim);
+	_r[TData::vertical] = gsl_vector_subvector(_dists,0,_nsim);
+	_r[TData::horizontal] = gsl_vector_subvector(_dists,_nsim,_nsim);
+	pthread_mutex_init(&_process_lock,NULL);
+
+	/* Note that the magnitude and logarithmic distance samples are
+	 * initially set to M=[2.0, 2.2, ..., 8.0] and R to [0.0, 0.1, ...,2.0]
+	 */
+	_nms = 31;
+	_nrs = 21;
+	_msamples = new double[_nms];
+	_rsamples = new double[_nrs];
+	for(int i=0;i<_nms;i++)
+		_msamples[i] = 2.0 + 0.2*i;
+	for(int i=0;i<_nrs;i++)
+		_rsamples[i] = 0.0 + 0.1*i;
+};
+
+
+GbA::~GbA(){
+	delete[] _msamples;
+	delete[] _rsamples;
+	gsl_vector_free(_mags);
+	gsl_vector_free(_dists);
+	delete _td;
+}
+
 void GbA::init(const std::string &filename){
 	_td = new TData;
 	_td->load(filename);
@@ -116,6 +169,22 @@ void GbA::set_samples(double *msamples, int nms, double *rsamples, int nrs){
 	memcpy(_rsamples,rsamples,nrs*sizeof(double));
 	_nms = nms;
 	_nrs = nrs;
+}
+
+std::vector<double> GbA::get_nms(){
+	std::vector<double> m(_nms);
+	for(int i=0;i<_nms;i++){
+		m[i] = _msamples[i];
+	}
+	return m;
+}
+
+std::vector<double> GbA::get_nrs(){
+	std::vector<double> r(_nrs);
+	for(int i=0;i<_nrs;i++){
+		r[i] = _rsamples[i];
+	}
+	return r;
 }
 
 void GbA::process(double *data, int nbands, float time, int cmpnt){
@@ -179,6 +248,7 @@ void GbA::process(double *data, int nbands, float time, int cmpnt){
 	_cov[0][1] = gsl_stats_covariance_m(_rv.vector.data,1,_mv.vector.data,1,
 			                            _rv.vector.size,_mn[0],_mn[1]);
 	_cov[1][0] = _cov[0][1];
+	delete[] indices;
 	pthread_mutex_unlock(&_process_lock);
 }
 

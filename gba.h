@@ -13,6 +13,10 @@
  */
 class TData {
 public:
+	TData();
+
+	~TData();
+
 	enum Component {
 		vertical = 0,
 		horizontal =1
@@ -81,31 +85,17 @@ private:
 	pthread_mutex_t _process_lock;
 
 public:
-	GbA(int nb, int ns){
-		_nbands = nb;
-		_nsim = ns;
-		_status[TData::vertical] = false;
-		_status[TData::horizontal] = false;
-		_mags = gsl_vector_calloc(2*_nsim);
-		_dists = gsl_vector_calloc(2*_nsim);
-		_m[TData::vertical] = gsl_vector_subvector(_mags,0,_nsim);
-		_m[TData::horizontal] = gsl_vector_subvector(_mags,_nsim,_nsim);
-		_r[TData::vertical] = gsl_vector_subvector(_dists,0,_nsim);
-		_r[TData::horizontal] = gsl_vector_subvector(_dists,_nsim,_nsim);
-		pthread_mutex_init(&_process_lock,NULL);
+	GbA(int nb, int ns);
 
-		/* Note that the magnitude and logarithmic distance samples are
-		 * initially set to M=[2.0, 2.2, ..., 8.0] and R to [0.0, 0.1, ...,2.0]
-		 */
-		_nms = 31;
-		_nrs = 21;
-		_msamples = new double[_nms];
-		_rsamples = new double[_nrs];
-		for(int i=0;i<_nms;i++)
-			_msamples[i] = 2.0 + 0.2*i;
-		for(int i=0;i<_nrs;i++)
-			_rsamples[i] = 0.0 + 0.1*i;
-	};
+	~GbA();
+
+	// Return the magnitude samples. This is done by converting the values to
+	// a vector to return both values and size
+	std::vector<double> get_nms();
+
+	// Return the distance samples. This is done by converting the values to
+	// a vector to return both values and size
+	std::vector<double> get_nrs();
 
 	// Change the default values for magnitude and distance samples
 	void set_samples(double *msamples, int nms, double *rsamples, int nrs);
