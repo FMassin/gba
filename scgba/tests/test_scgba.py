@@ -27,8 +27,7 @@ class SCGbATestCase(unittest.TestCase):
         channel = 'HGZ'
         self.gba_data = os.path.join(self.path, 'data',
                                      'BO.%s..%s_gba.txt' % (station, channel))
-        wf = os.path.join(self.path, 'data', 'test2.mseed.sorted')
-
+        wf = os.path.join(self.path, 'data', 'BO.%s..%s.ms.sorted' % (station, channel))
         if not os.path.isfile(self.gba_data):
             faketimepath = \
             '/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1'
@@ -91,7 +90,7 @@ class SCGbATestCase(unittest.TestCase):
                 self.mag_unc.append(np.sqrt(msig))
                 self.dist.append(rbar)
                 self.dist_unc.append(np.sqrt(rsig))
-                self.times.append(ct - self.pt_abk)
+                self.times.append(ts - self.pt_abk)
 
 
 
@@ -106,7 +105,7 @@ class SCGbATestCase(unittest.TestCase):
         xmax = 20
         ax1 = fig.add_axes([0.07, 0.1, 0.85, 0.5])
         ax1.errorbar(self.times, self.mag, yerr=self.mag_unc, color='g')
-        # ax1.plot(self.abk_t1, self.abk_mhat, 'g:')
+        #ax1.plot(self.abk_t1, self.abk_mhat, 'g:')
         ax1.vlines(0, 0, 7, 'r')
         ax1.hlines(self.ev_mag, xmin, xmax, color='g', linewidths=2,
                    linestyle='--')
