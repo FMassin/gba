@@ -5,3 +5,9 @@
 gba
 gba.py
 *~
+.cproject
+.ipynb_checkpoints
+.project
+.pydevproject
+
+     
