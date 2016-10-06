@@ -6,7 +6,7 @@
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "gba.h"
+#include "../gba.h"
 %}
 
 namespace std {
@@ -31,5 +31,5 @@ import_array();
 %apply (double INPLACE_ARRAY2[ANY][ANY]) {double cov[2][2]};
 
 /* Let's just grab the original header file here */
-%include "gba.h"
+%include "../gba.h"
 

@@ -10,6 +10,8 @@ import unittest
 import numpy as np
 import scipy.stats as stats
 
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import gba
 
 
@@ -20,7 +22,8 @@ class GbATestCase(unittest.TestCase):
         self.path = os.path.dirname(__file__)
         self.fbdata = np.loadtxt(os.path.join(self.path, 'data', 'az_obs.txt'),
                                  unpack=True)
-        training_data = os.path.join(self.path, '..', 'data', 'az_training.nc')
+        training_data = os.path.join(
+            self.path, '..', '..', 'data', 'az_training.nc')
         self.nbands = 9
         self.nsim = 30
         self.g = gba.GbA(self.nbands, self.nsim)
