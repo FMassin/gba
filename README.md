@@ -6,6 +6,10 @@ To compile the C++ implementation the following dependencies have to be installe
 * GNU Scientific Library
 * Atlas and Blas
 
+### Example
+
+An example for using the code with C++ can be found under `examples`.
+
 
 ## Python
 
