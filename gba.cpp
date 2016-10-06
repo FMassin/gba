@@ -1,4 +1,4 @@
-#include "gba.h"
+#include <gba.h>
 
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_sort_vector.h>
@@ -10,6 +10,8 @@
 #include <iostream>
 #include <limits>
 #include <pthread.h>
+#include <string>
+#include <sys/stat.h>
 
 TData::TData(){
 	_nid = 0;
@@ -155,9 +157,31 @@ GbA::~GbA(){
 	delete _td;
 }
 
+std::string GbA::get_default_tdata(){
+	std::string s(__FILE__);
+	std::string dirname;
+	std::string::size_type n;
+	n = s.rfind('/');
+	if(n == s.npos){
+		dirname = ".";
+	}else{
+		dirname = s.substr(0,n);
+	}
+	return dirname + "/data/GbA_training.nc";
+}
+
 void GbA::init(const std::string &filename){
+	std::string _tdfn;
+	struct stat _fatt;
+	if(filename == ""){
+		_tdfn = get_default_tdata();
+	}else{
+		_tdfn = filename;
+	}
+	stat(_tdfn.c_str(),&_fatt);
+	assert(_fatt.st_mode & S_IFREG);
 	_td = new TData;
-	_td->load(filename);
+	_td->load(_tdfn);
 }
 
 void GbA::set_samples(double *msamples, int nms, double *rsamples, int nrs){
@@ -211,7 +235,6 @@ void GbA::process(double *data, int nbands, float time, int cmpnt){
 	}
 
 	tdata = _td->get_amps(timeidx,_c);
-
 
 	for (i=0; i<nbands; i++){
 			gsl_vector_set(input, i, std::log10(data[i]));

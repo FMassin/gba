@@ -100,8 +100,11 @@ public:
 	// Change the default values for magnitude and distance samples
 	void set_samples(double *msamples, int nms, double *rsamples, int nrs);
 
+	// Get the path to the default training data
+	std::string get_default_tdata();
+
 	// Load the training data
-	void init(const std::string &filename = "./data/GbA_training.nc");
+	void init(const std::string &filename = "");
 
 	// Compute mean and covariance matrix for magnitude and epicentral distance
 	// based on the given filterbank data
